@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smart Tourism 知识库</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f5f4f0;color:#1a1a18;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+.topbar{padding:10px 16px;background:#fff;border-bottom:1px solid #e2e0da;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.topbar h1{font-size:15px;font-weight:500;flex:1}
+.search-wrap{position:relative}
+.search-wrap input{font-size:12px;padding:5px 10px 5px 26px;border:1px solid #ddd;border-radius:20px;outline:none;width:160px;background:#f8f7f4;color:#1a1a18}
+.s-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:12px;color:#bbb}
+.btn{font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;color:#555;white-space:nowrap}
+.btn:hover{background:#f0ede8}
+.btn.primary{background:#534AB7;color:#fff;border-color:#534AB7}
+.btn.danger{color:#c00;border-color:#fcc}
+.filterbar{padding:7px 14px;background:#faf9f6;border-bottom:1px solid #e2e0da;display:flex;flex-wrap:wrap;gap:5px;flex-shrink:0}
+.fb{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid #ccc;background:#ede9e3;color:#555;cursor:pointer;user-select:none}
+.fb.on{color:#fff;border-color:transparent}
+.main{display:flex;flex:1;overflow:hidden}
+.left{flex:1;overflow-y:auto;padding:10px 12px}
+.sec{margin-bottom:6px;border:1px solid #e2e0da;border-radius:10px;overflow:hidden;background:#fff;transition:opacity .2s}
+.sec.off{opacity:.18;pointer-events:none}
+.sec.search-hide{display:none}
+.sh{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;user-select:none}
+.sh:hover{background:#faf9f6}
+.sh-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.sh-t{font-size:13px;font-weight:500;flex:1}
+.sh-n{font-size:10px;color:#bbb}
+.arr{font-size:14px;color:#bbb;transition:transform .18s}
+.sb{display:none;border-top:1px solid #e2e0da}
+.sb.open{display:block}
+.grp{border-bottom:1px solid #eceae4}
+.grp:last-child{border-bottom:none}
+.gh{display:flex;align-items:center;padding:6px 12px 6px 24px;cursor:pointer;background:#faf9f6;user-select:none}
+.gh:hover{background:#f0ede6}
+.gl{font-size:11px;font-weight:500;color:#888;flex:1}
+.garr{font-size:11px;color:#ccc;transition:transform .18s}
+.gb{display:none;padding:7px 12px 9px 24px}
+.gb.open{display:block}
+.tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid;line-height:1.6;cursor:pointer;transition:all .15s;user-select:none;position:relative}
+.tag:hover{opacity:.8;transform:translateY(-1px)}
+.tag.active{box-shadow:0 0 0 2px #534AB7}
+.tag.search-dim{opacity:.2}
+.tag .del-btn{display:none;position:absolute;right:-4px;top:-4px;width:14px;height:14px;border-radius:50%;background:#e24b4a;color:#fff;font-size:9px;align-items:center;justify-content:center;cursor:pointer}
+.edit-mode .tag:hover .del-btn{display:flex}
+.add-tag-btn{font-size:11px;padding:3px 9px;border-radius:20px;border:1px dashed #ccc;color:#aaa;cursor:pointer;display:none;background:transparent}
+.edit-mode .add-tag-btn{display:inline-flex;align-items:center;gap:3px}
+.panel{width:380px;background:#fff;border-left:1px solid #e2e0da;display:flex;flex-direction:column;flex-shrink:0;transition:width .25s}
+.panel.closed{width:0;border-left:none;overflow:hidden}
+.panel-head{padding:12px 14px 9px;border-bottom:1px solid #e2e0da;flex-shrink:0}
+.panel-close{float:right;font-size:18px;color:#bbb;cursor:pointer}
+.panel-title{font-size:14px;font-weight:500;padding-right:22px;line-height:1.4}
+.panel-cat{font-size:11px;color:#aaa;margin-top:2px}
+.panel-body{flex:1;overflow-y:auto;padding:12px 14px}
+.block{margin-bottom:14px}
+.bl{font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#bbb;margin-bottom:5px}
+.bc{font-size:12px;color:#444;line-height:1.8}
+.cite{font-size:11px;color:#666;background:#f8f7f4;border-radius:6px;padding:7px 10px;margin-top:5px;line-height:1.6;border-left:2px solid #e0ded8}
+.cite b{color:#444;font-weight:500}
+.tip-box{background:#f8f7f4;border-radius:8px;padding:10px 12px;font-size:12px;color:#444;line-height:1.8}
+.note-area{width:100%;min-height:60px;border:1px solid #e2e0da;border-radius:8px;padding:8px 10px;font-size:12px;font-family:inherit;resize:vertical;outline:none;background:#faf9f6}
+.note-saved{font-size:11px;color:#aaa;margin-top:3px}
+.edit-banner{display:none;background:#FEF3E2;border-bottom:1px solid #F5C260;padding:7px 16px;font-size:12px;color:#7A4A08;flex-shrink:0;align-items:center;gap:8px}
+.edit-banner.show{display:flex}
+
+/* Key setup banner */
+.key-banner{background:#EEF;border-bottom:1px solid #CCE;padding:8px 16px;font-size:12px;color:#334;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.key-banner input{flex:1;padding:4px 8px;border:1px solid #ccd;border-radius:6px;font-size:12px;font-family:inherit;outline:none;max-width:340px}
+.key-banner.hidden{display:none}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:12px;padding:20px 22px;width:320px}
+.modal h3{font-size:14px;font-weight:500;margin-bottom:12px}
+.modal input{width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;outline:none;font-family:inherit;margin-bottom:10px}
+.modal-btns{display:flex;gap:6px;justify-content:flex-end}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a18;color:#fff;padding:8px 18px;border-radius:20px;font-size:12px;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid #eee;border-top-color:#534AB7;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.empty-panel{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#ccc;font-size:12px;gap:6px;text-align:center;line-height:1.8}
+.retry-btn{font-size:11px;padding:5px 14px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;color:#534AB7;margin-top:8px;display:block}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🗺 Smart Tourism 知识库</h1>
+  <div class="search-wrap">
+    <span class="s-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="搜索理论…" oninput="doSearch(this.value)">
+  </div>
+  <button class="btn" id="editBtn" onclick="toggleEdit()">✏️ 编辑模式</button>
+  <button class="btn primary" onclick="copyLink()">🔗 分享链接</button>
+</div>
+
+<!-- API Key 输入栏（第一次使用时显示） -->
+<div class="key-banner" id="keyBanner">
+  <span>🔑 请输入 OpenRouter API Key 以启用 AI 功能：</span>
+  <input type="password" id="keyInput" placeholder="sk-or-...">
+  <button class="btn primary" onclick="saveKey()">保存</button>
+  <button class="btn" onclick="document.getElementById('keyBanner').classList.add('hidden')">跳过</button>
+</div>
+
+<div class="edit-banner" id="editBanner">
+  <span>✏️ 编辑模式 — 可添加/删除标签</span>
+  <button class="btn danger" onclick="toggleEdit()">退出</button>
+</div>
+
+<div class="filterbar" id="filters"></div>
+<div class="main">
+  <div class="left" id="map"></div>
+  <div class="panel closed" id="panel">
+    <div class="panel-head">
+      <span class="panel-close" onclick="closePanel()">×</span>
+      <div class="panel-title" id="panel-title">—</div>
+      <div class="panel-cat" id="panel-cat"></div>
+    </div>
+    <div class="panel-body" id="panel-body">
+      <div class="empty-panel">📖 点击左侧任意理论标签<br>查看定义、文献与应用解析</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <h3>添加新理论标签</h3>
+    <input type="text" id="newTagInput" placeholder="理论名称" maxlength="40">
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn primary" onclick="confirmAddTag()">添加</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const C={
+  core:{label:'ST核心',color:'#534AB7',bg:'#EEEDFE',tc:'#3C3489',bc:'#AFA9EC'},
+  meth:{label:'研究方法',color:'#0F6E56',bg:'#E1F5EE',tc:'#085041',bc:'#5DCAA5'},
+  psy:{label:'心理学',color:'#D85A30',bg:'#FAECE7',tc:'#712B13',bc:'#F0997B'},
+  mkt:{label:'营销学',color:'#C4407A',bg:'#FBEAF0',tc:'#6B1A3A',bc:'#E889B4'},
+  soc:{label:'社会学',color:'#7B3010',bg:'#FAECE7',tc:'#5A2008',bc:'#D4855A'},
+  eco:{label:'经济学',color:'#0F7A58',bg:'#E1F5EE',tc:'#074D38',bc:'#45C49A'},
+  geo:{label:'地理学',color:'#1A5FA0',bg:'#E6F1FB',tc:'#0A3D6E',bc:'#75AFE8'},
+  com:{label:'传播学',color:'#A06010',bg:'#FEF3E2',tc:'#6B3D08',bc:'#E5A83A'},
+  cs:{label:'计算机/HCI',color:'#2E6B10',bg:'#EAF3DE',tc:'#1A4208',bc:'#88C450'},
+  mgmt:{label:'管理学',color:'#6B1F3C',bg:'#FBEAF0',tc:'#4A1028',bc:'#D46090'}
+};
+const DATA=[
+{cat:'core',title:'ST 核心理论框架',groups:[
+  {label:'技术接受 · 采纳',tags:['TAM 技术接受模型','UTAUT / UTAUT2','IDT 创新扩散理论','TTF 任务技术契合','VAM 价值采纳模型','TRI 技术准备度']},
+  {label:'信息系统 · 服务质量',tags:['IS Success Model','SERVQUAL / E-SERVQUAL','ECM 期望确认模型','信息质量理论','D&M 更新模型']},
+  {label:'体验 · 沉浸 · 游戏化',tags:['Flow Theory 心流','体验经济理论','Presence 临场感','Affordance 可供性','Gamification 游戏化','具身交互理论']},
+  {label:'隐私 · 信任 · 安全',tags:['Privacy Calculus','Trust Theory 信任','Human-AI Trust','Privacy Paradox','信息安全行为理论']},
+  {label:'目的地 · 永续 · 治理',tags:['STD 智慧目的地框架','目的地形象理论','TALC 生命周期','Value Co-creation','SDGs 永续旅游','Overtourism 治理']}
+]},
+{cat:'meth',title:'研究方法全景',groups:[
+  {label:'定量方法',tags:['PLS-SEM','CB-SEM','多元回归分析','ANOVA / ANCOVA','PROCESS Macro','DID 双重差分','面板数据回归','选择实验法 CE','fsQCA 模糊集比较','倾向得分匹配 PSM']},
+  {label:'定性方法',tags:['Case Study 案例研究','Grounded Theory','深度访谈','焦点小组','Netnography 网络民族志','Thematic Analysis','Content Analysis','Phenomenology 现象学']},
+  {label:'大数据 · 计算',tags:['Sentiment Analysis','LDA 主题建模','SNA 社交网络分析','GPS 轨迹分析','机器学习预测','GIS 空间分析','眼动追踪','App 行为日志','POI 数据分析']},
+  {label:'综述 · 混合方法',tags:['Systematic Review','Bibliometric Analysis','Meta-Analysis','Sequential Mixed Methods','ESM 体验取样','VOSviewer 知识图谱']}
+]},
+{cat:'psy',title:'ST × 心理学',groups:[
+  {label:'动机 · 决策',tags:['SDT 自我决定理论','Push-Pull 推拉理论','TPB 计划行为理论','逃避理论','心理距离 CLT','自我一致性理论','前景理论']},
+  {label:'情绪 · 体验',tags:['认知评估理论','ART 恢复性体验','情绪调节理论','敬畏感 Awe','怀旧 Nostalgia','S-O-R 模型','峰终定律']},
+  {label:'认知 · 感知',tags:['认知负荷理论','自我效能感','感知价值理论','感知风险理论','叙事传输理论','双系统理论']}
+]},
+{cat:'mkt',title:'ST × 营销学',groups:[
+  {label:'消费者行为 · 忠诚',tags:['品牌忠诚度理论','顾客终身价值 CLV','转换成本理论','顾客旅程理论','ELM 精细可能性模型','用户投入度']},
+  {label:'目的地营销 · 品牌',tags:['目的地品牌资产','目的地个性理论','UGC 营销效果','内容营销理论','IMC 整合营销']},
+  {label:'个性化 · 社交营销',tags:['个性化营销','关系营销理论','Social Commerce','影响者营销 KOL','情感品牌理论']}
+]},
+{cat:'soc',title:'ST × 社会学',groups:[
+  {label:'权力 · 身份 · 凝视',tags:['Tourist Gaze 旅游凝视','算法凝视','身份认同理论','监控理论 Foucault','符号互动论','拟剧论 Goffman','表演理论']},
+  {label:'社区 · 资本 · 交换',tags:['社会资本理论','社会交换理论','共享经济社会学','社会认同理论','数字鸿沟理论','居民感知框架']},
+  {label:'文化 · 批判 · 真实性',tags:['后殖民理论','文化资本 Bourdieu','旅游真实性 Authenticity','涵化理论','亲环境行为理论']}
+]},
+{cat:'eco',title:'ST × 经济学',groups:[
+  {label:'行为经济 · 决策偏误',tags:['锚定效应','损失厌恶','助推 Nudge','有限理性','心理账户','从众效应','禀赋效应']},
+  {label:'平台 · 市场结构',tags:['双边市场理论','信息不对称','信号理论','动态定价','长尾理论','网络效应','共享经济经济学']},
+  {label:'价值 · 福利 · 外部性',tags:['支付意愿 WTP','外部性理论','旅游乘数效应','价格公平感知','消费者剩余']}
+]},
+{cat:'geo',title:'ST × 地理学',groups:[
+  {label:'空间行为 · 场所理论',tags:['时空行为理论','地方依附 Place Attachment','景观感知','地方感 Sense of Place','空间扩散理论','Overtourism 地理治理']},
+  {label:'GIS · 空间分析',tags:['GIS 空间分析','GPS 轨迹挖掘','POI 分析','热力图人流','Geotagged 社媒数据','空间聚类分析']}
+]},
+{cat:'com',title:'ST × 传播学',groups:[
+  {label:'受众 · 媒介使用',tags:['使用与满足 U&G','媒介丰富度理论','双重加工理论','准社会关系','叙事传输理论','媒介依赖理论']},
+  {label:'议程 · 框架 · 形象',tags:['框架理论 Framing','议程设置理论','符号学 Semiotics','危机传播理论','形象修复理论']},
+  {label:'eWOM · 社交影响',tags:['eWOM 电子口碑','信息采纳模型 IAM','社会影响理论','AIGC 对 eWOM 冲击','虚假评论识别']}
+]},
+{cat:'cs',title:'ST × 计算机 / HCI',groups:[
+  {label:'AI · 推荐系统',tags:['协同过滤推荐','可解释 AI XAI','LLM 旅游应用','过滤气泡','AI Chatbot','数字孪生']},
+  {label:'VR · AR · 沉浸',tags:['VR 临场感','AR 增强现实导览','元宇宙旅游','具身交互','恐怖谷效应']},
+  {label:'UX · 游戏化 · IoT',tags:['UX 用户体验设计','游戏化设计框架','IoT 物联网','大数据需求预测','区块链应用']}
+]},
+{cat:'mgmt',title:'ST × 管理学',groups:[
+  {label:'服务管理 · 价值',tags:['服务主导逻辑 SDL','价值共创','CEM 顾客体验管理','服务利润链','旅游生态系统','知识管理']},
+  {label:'战略 · 能力 · 创新',tags:['动态能力理论','资源基础观 RBV','开放式创新','制度理论','组织学习','员工科技接受']}
+]}
+];
+
+// ── Key management ──
+function getKey(){return localStorage.getItem('gemini_key')||'';}
+function saveKey(){
+  const v=document.getElementById('keyInput').value.trim();
+  if(!v){showToast('请输入 Key');return;}
+  localStorage.setItem('gemini_key',v);
+  document.getElementById('keyBanner').classList.add('hidden');
+  showToast('✅ Key 已保存，现在可以点击理论标签了');
+}
+// Auto-hide banner if key exists
+if(getKey()) document.getElementById('keyBanner').classList.add('hidden');
+
+// ── Build UI ──
+let editMode=false,activeTagEl=null,pendingAdd=null;
+
+function buildFilters(){
+  const fr=document.getElementById('filters');fr.innerHTML='';
+  DATA.forEach(d=>{
+    const c=C[d.cat],b=document.createElement('span');
+    b.className='fb on';b.dataset.c=d.cat;b.textContent=c.label;
+    b.style.cssText=`background:${c.color};color:#fff;border-color:transparent`;
+    b.onclick=function(){
+      const on=this.classList.toggle('on');
+      this.style.background=on?c.color:'#ede9e3';this.style.color=on?'#fff':'#555';this.style.borderColor=on?'transparent':'#ccc';
+      document.querySelectorAll(`.sec[data-c="${d.cat}"]`).forEach(s=>s.classList.toggle('off',!on));
+    };
+    fr.appendChild(b);
+  });
+}
+
+function buildMap(){
+  const map=document.getElementById('map');map.innerHTML='';
+  DATA.forEach((d,di)=>{
+    const c=C[d.cat];
+    const sec=document.createElement('div');sec.className='sec';sec.dataset.c=d.cat;
+    const sh=document.createElement('div');sh.className='sh';
+    sh.innerHTML=`<div class="sh-dot" style="background:${c.color}"></div><div class="sh-t">${d.title}</div><div class="sh-n">${d.groups.length}组</div><span class="arr" id="arr${di}" style="transform:rotate(90deg)">›</span>`;
+    sh.onclick=()=>{const sb=document.getElementById('sb'+di);const o=sb.classList.toggle('open');document.getElementById('arr'+di).style.transform=o?'rotate(90deg)':'rotate(0)';};
+    const sb=document.createElement('div');sb.className='sb open';sb.id='sb'+di;
+    d.groups.forEach((g,gi)=>{
+      const grp=document.createElement('div');grp.className='grp';
+      const gh=document.createElement('div');gh.className='gh';
+      gh.innerHTML=`<span class="gl">${g.label}</span><span class="garr" id="garr${di}_${gi}" style="transform:rotate(90deg)">›</span>`;
+      gh.onclick=()=>{const gb=document.getElementById('gb'+di+'_'+gi);const o=gb.classList.toggle('open');document.getElementById('garr'+di+'_'+gi).style.transform=o?'rotate(90deg)':'rotate(0)';};
+      const gb=document.createElement('div');gb.className='gb open';gb.id='gb'+di+'_'+gi;
+      const tags=document.createElement('div');tags.className='tags';
+      g.tags.forEach((t,ti)=>tags.appendChild(makeTag(t,di,gi,ti,c)));
+      const ab=document.createElement('span');ab.className='add-tag-btn';ab.textContent='＋ 添加';
+      ab.onclick=(e)=>{e.stopPropagation();pendingAdd={di,gi};document.getElementById('newTagInput').value='';document.getElementById('addModal').classList.add('show');setTimeout(()=>document.getElementById('newTagInput').focus(),50);};
+      tags.appendChild(ab);
+      gb.appendChild(tags);grp.appendChild(gh);grp.appendChild(gb);sb.appendChild(grp);
+    });
+    sec.appendChild(sh);sec.appendChild(sb);map.appendChild(sec);
+  });
+}
+
+function makeTag(t,di,gi,ti,c){
+  const s=document.createElement('span');
+  s.className='tag';s.dataset.tag=t;
+  s.style.cssText=`background:${c.bg};color:${c.tc};border-color:${c.bc}`;
+  s.textContent=t;
+  s.onclick=(e)=>{if(!e.target.classList.contains('del-btn'))openTag(s,t,DATA[di].cat);};
+  const d=document.createElement('span');d.className='del-btn';d.textContent='×';
+  d.onclick=(e)=>{e.stopPropagation();if(confirm(`删除「${t}」？`)){DATA[di].groups[gi].tags.splice(ti,1);buildMap();}};
+  s.appendChild(d);return s;
+}
+
+function toggleEdit(){
+  editMode=!editMode;
+  document.body.classList.toggle('edit-mode',editMode);
+  document.getElementById('editBanner').classList.toggle('show',editMode);
+  document.getElementById('editBtn').textContent=editMode?'✅ 完成':'✏️ 编辑模式';
+}
+function closeModal(){document.getElementById('addModal').classList.remove('show');}
+function confirmAddTag(){
+  const v=document.getElementById('newTagInput').value.trim();if(!v||!pendingAdd)return;
+  DATA[pendingAdd.di].groups[pendingAdd.gi].tags.push(v);buildMap();closeModal();
+}
+document.getElementById('addModal').onclick=(e)=>{if(e.target.id==='addModal')closeModal();};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&pendingAdd)confirmAddTag();});
+
+function doSearch(q){
+  const v=q.trim().toLowerCase();
+  document.querySelectorAll('.tag').forEach(t=>t.classList.toggle('search-dim',v&&!t.dataset.tag.toLowerCase().includes(v)));
+  document.querySelectorAll('.sec').forEach(s=>{
+    if(!v){s.classList.remove('search-hide');return;}
+    s.classList.toggle('search-hide',![...s.querySelectorAll('.tag')].some(t=>t.dataset.tag&&t.dataset.tag.toLowerCase().includes(v)));
+  });
+}
+
+function closePanel(){
+  document.getElementById('panel').classList.add('closed');
+  if(activeTagEl)activeTagEl.classList.remove('active');
+  activeTagEl=null;
+}
+
+async function openTag(el,tagName,cat){
+  if(activeTagEl)activeTagEl.classList.remove('active');
+  activeTagEl=el;el.classList.add('active');
+  document.getElementById('panel').classList.remove('closed');
+  document.getElementById('panel-title').textContent=tagName;
+  document.getElementById('panel-cat').textContent=C[cat].label+' · ST知识库';
+  const cached=sessionStorage.getItem('stk_'+tagName);
+  if(cached){renderPanel(JSON.parse(cached),cat,tagName);return;}
+  fetchTheory(tagName,cat);
+}
+
+async function fetchTheory(tagName,cat){
+  const body=document.getElementById('panel-body');
+  const key=getKey();
+  if(!key){
+    body.innerHTML=`<div class="block"><div class="bc" style="color:#888">请先在顶部输入 OpenRouter API Key 以启用 AI 解释功能。<br><br><button class="retry-btn" onclick="document.getElementById('keyBanner').classList.remove('hidden')">输入 Key</button></div></div>`;
+    return;
+  }
+  body.innerHTML=`<div style="padding:20px;text-align:center;color:#aaa;font-size:12px"><span class="spin"></span>AI 正在生成解释…</div>`;
+
+  const prompt=`你是Smart Tourism学术专家。介绍「${tagName}」理论（${C[cat].label}方向），严格只输出JSON，不加任何其他内容：
+{"original_def":"原始定义含提出者年份2-3句","core_concepts":"核心概念3-4句","evolution":"演化历程3句","st_application":"ST应用3句","key_refs":[{"authors":"作者","year":"年","title":"标题","journal":"期刊"},{"authors":"作者","year":"年","title":"标题","journal":"期刊"},{"authors":"作者","year":"年","title":"标题","journal":"期刊"}],"research_tips":"研究建议2-3句"}`;
+
+  try{
+    const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key,'HTTP-Referer':'https://smarttourxy.netlify.app','X-Title':'ST Knowledge Base'},
+      body:JSON.stringify({model:'google/gemma-3-12b-it:free',messages:[{role:'user',content:prompt}],max_tokens:1200,temperature:0.2})
+    });
+    const data=await r.json();
+    if(data.error){
+      body.innerHTML=`<div class="block"><div class="bc" style="color:#c00">API错误：${data.error.message}<br><small>请检查 Key 是否正确</small></div><button class="retry-btn" onclick="fetchTheory('${tagName}','${cat}')">重试</button></div>`;
+      return;
+    }
+    const raw=data.choices?.[0]?.message?.content||'';
+    let info=null;
+    for(const fn of[()=>JSON.parse(raw.trim()),()=>JSON.parse(raw.replace(/```json|```/g,'').trim()),()=>{const m=raw.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw 0;}]){
+      try{info=fn();if(info&&info.original_def)break;}catch(e){}
+    }
+    if(!info){
+      body.innerHTML=`<div class="block"><div class="bc" style="color:#c00">解析失败，原始内容：</div><div style="font-size:11px;background:#f8f7f4;padding:8px;border-radius:6px;margin-top:6px;white-space:pre-wrap;max-height:200px;overflow-y:auto">${raw||'空'}</div><button class="retry-btn" onclick="fetchTheory('${tagName}','${cat}')">重试</button></div>`;
+      return;
+    }
+    sessionStorage.setItem('stk_'+tagName,JSON.stringify(info));
+    renderPanel(info,cat,tagName);
+  }catch(err){
+    body.innerHTML=`<div class="block"><div class="bc" style="color:#c00">网络错误：${err.message}</div><button class="retry-btn" onclick="fetchTheory('${tagName}','${cat}')">重试</button></div>`;
+  }
+}
+
+function renderPanel(info,cat,tagName){
+  const c=C[cat],nk='stn_'+tagName,sn=localStorage.getItem(nk)||'';
+  document.getElementById('panel-body').innerHTML=`
+    <div class="block"><div class="bl">📌 原始定义</div><div class="bc">${info.original_def||'—'}</div></div>
+    <div class="block"><div class="bl">🔑 核心概念</div><div class="bc">${info.core_concepts||'—'}</div></div>
+    <div class="block"><div class="bl">📈 理论演化</div><div class="bc">${info.evolution||'—'}</div></div>
+    <div class="block"><div class="bl">🗺 ST 应用</div><div class="bc">${info.st_application||'—'}</div></div>
+    <div class="block"><div class="bl">📚 代表文献</div>${(info.key_refs||[]).map(r=>`<div class="cite"><b>${r.authors||''} (${r.year||''})</b><br>${r.title||''}<br><span style="color:#bbb">${r.journal||''}</span></div>`).join('')}</div>
+    <div class="block"><div class="bl">💡 研究建议</div><div class="tip-box" style="border-left:3px solid ${c.color}">${info.research_tips||'—'}</div></div>
+    <div class="block"><div class="bl">📝 我的笔记</div><textarea class="note-area" id="na" placeholder="写下你的理解…">${sn}</textarea><div class="note-saved" id="ns"></div></div>`;
+  const na=document.getElementById('na');
+  na.oninput=()=>{localStorage.setItem(nk,na.value);document.getElementById('ns').textContent='已保存 ✓';};
+}
+
+function copyLink(){navigator.clipboard.writeText(location.href).then(()=>showToast('🔗 链接已复制！'));}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+buildFilters();buildMap();
+</script>
+</body>
+</html>
